@@ -63,6 +63,7 @@ public:
     static std::function<int(lms_device_t*, bool, size_t, float_type)> SetLOFrequency;
     static std::function<int(lms_device_t*, bool, size_t, size_t)> SetAntenna;
     static std::function<int(lms_device_t*, bool, size_t, unsigned)> SetGaindB;
+    static std::function<int(lms_device_t*, bool, size_t, float_type)> SetNormalizedGain;
     static std::function<int(lms_device_t*, lms_stream_t*)> SetupStream;
     static std::function<int(lms_device_t*, lms_stream_t*)> DestroyStream;
     static std::function<int(lms_stream_t*)> StartStream;

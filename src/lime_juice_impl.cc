@@ -34,6 +34,7 @@ WRAP_LMS_FUNCTION(int(lms_device_t*, float_type, size_t), SetSampleRate);
 WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, float_type), SetLOFrequency);
 WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, size_t), SetAntenna);
 WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, unsigned), SetGaindB);
+WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, float_type), SetNormalizedGain);
 WRAP_LMS_FUNCTION(int(lms_device_t*, lms_stream_t*), SetupStream);
 WRAP_LMS_FUNCTION(int(lms_device_t*, lms_stream_t*), DestroyStream);
 WRAP_LMS_FUNCTION(int(lms_stream_t*), StartStream);
