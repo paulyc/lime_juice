@@ -48,7 +48,7 @@ public:
                 std::string msg("Error calling some fun: ");
                 msg += LMS_GetLastErrorMessage();
                 LimeLog::log(LimeLog::ERROR, msg.c_str());
-                throw LMS::exception();
+                throw LMS::exception(msg);
             }
             return res;
         };

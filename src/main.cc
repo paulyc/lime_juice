@@ -87,6 +87,8 @@ void mainLoop(bool autoGain) {
             bytesWritten += count;
         }
 
+        //?fsync(STDOUT_FILENO);
+
         if (autoGain && loopCount++ % 7 == 0) {
             normalizedGain /= maxMag;
             maxMag = 0.0;
@@ -118,7 +120,7 @@ int main(int argc, char **argv) {
 
         LMS::SetupStream(dev, stream.get());
         mainLoop(true);
-    } catch (std::exception &e) {
+    } catch (LMS::exception &e) {
         std::cout << "Caught exception: " << e.what() << std::endl;
         running = false;
     }
