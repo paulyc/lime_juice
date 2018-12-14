@@ -26,8 +26,19 @@ namespace io {
 namespace github {
 namespace paulyc {
 
-std::function<int(lms_info_str_t*)> LMS::GetDeviceList =
-    LMS::wrap_error_check<>(std::function<int(lms_info_str_t*)>(LMS_GetDeviceList));
+WRAP_LMS_FUNCTION(int(lms_device_t**, const lms_info_str_t, void*), Open);
+WRAP_LMS_FUNCTION(int(lms_device_t*), Close);
+WRAP_LMS_FUNCTION(int(lms_device_t*), Init);
+WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, bool), EnableChannel);
+WRAP_LMS_FUNCTION(int(lms_device_t*, float_type, size_t), SetSampleRate);
+WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, float_type), SetLOFrequency);
+WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, size_t), SetAntenna);
+WRAP_LMS_FUNCTION(int(lms_device_t*, bool, size_t, unsigned), SetGaindB);
+WRAP_LMS_FUNCTION(int(lms_device_t*, lms_stream_t*), SetupStream);
+WRAP_LMS_FUNCTION(int(lms_device_t*, lms_stream_t*), DestroyStream);
+WRAP_LMS_FUNCTION(int(lms_stream_t*), StartStream);
+WRAP_LMS_FUNCTION(int(lms_stream_t*), StopStream);
+WRAP_LMS_FUNCTION(int(lms_stream_t*, void*, size_t, lms_stream_meta_t*, unsigned), RecvStream);
 
 } // namespace paulyc
 } // namespace github
