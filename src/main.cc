@@ -53,14 +53,17 @@ void cleanup() {
     }
 }
 
-static double normalizedGain = 0.5;
+static double normalizedGain = 0.8;
+static double powerSamples[0xFFFF] = {0.0};
+static int powerSampleIndex = 0;
+static double powerSampleSum = 0.0;
+static double maxMag = 0.0;
 
 void mainLoop(bool autoGain) {
     lms_stream_status_t status;
     lms_stream_meta_t meta;
     size_t loopCount = 0;
-    double maxMag = 0.0;
-    constexpr size_t samples_per_recv = 0xFFFF;
+    constexpr size_t samples_per_recv = 8192;
     std::unique_ptr<float[]> buffer = std::unique_ptr<float[]>(new float[samples_per_recv * 2]);
     std::unique_ptr<int16_t[]> outBuffer = std::unique_ptr<int16_t[]>(new int16_t[samples_per_recv * 2]);
     LMS::StartStream(stream.get());
@@ -72,11 +75,24 @@ void mainLoop(bool autoGain) {
         for (int si = 0; si < samples; ++si) {
             const double I = buffer[si*2];
             const double Q = buffer[si*2+1];
-            const double mag = sqrt(I*I + Q*Q);
+            const double power = I*I + Q*Q;
+#if 0
+            if (autoGain) {
+                powerSampleSum += power - powerSamples[powerSampleIndex++];
+                if (powerSampleIndex >= sizeof(powerSamples)) {
+                    powerSampleIndex = 0;
+                    normalizedGain /= 0.707 * sqrt(powerSampleSum / sizeof(powerSamples));
+                    LMS::SetNormalizedGain(dev, LMS_CH_RX, 0, normalizedGain);
+                }
+                powerSamples[powerSampleIndex] = power;
+            }
+#endif
+            const double mag = sqrt(power);
             if (mag > maxMag) maxMag = mag;
             outBuffer[si*2] = (int16_t) (I > 0.0 ? I * SHRT_MAX : I * SHRT_MIN);
             outBuffer[si*2+1] = (int16_t) (Q > 0.0 ? Q * SHRT_MAX : Q * SHRT_MIN);
         }
+
         const size_t bytesToWrite = 2 * samples * sizeof(int16_t);
         size_t bytesWritten = 0;
         while (bytesWritten < bytesToWrite) {
@@ -87,11 +103,11 @@ void mainLoop(bool autoGain) {
             bytesWritten += count;
         }
 
-        //?fsync(STDOUT_FILENO);
-
-        if (autoGain && loopCount++ % 7 == 0) {
-            normalizedGain /= maxMag;
+        if (autoGain && loopCount++ % 1000 == 0) {
+            normalizedGain += 0.01 * (1.0 - maxMag) / normalizedGain;
             maxMag = 0.0;
+            std::cerr << "setting gain to " << normalizedGain << std::endl;
+            //LimeLog::log(LimeLog::DEBUG, msg.c_str());
             LMS::SetNormalizedGain(dev, LMS_CH_RX, 0, normalizedGain);
         }
 
@@ -103,25 +119,27 @@ int main(int argc, char **argv) {
     try {
         LimeLog::log(LimeLog::INFO, "Starting up. Grabbing Lime...");
         LMS::Open(&dev, NULL, NULL);
+        LMS::Init(dev);
         LimeLog::log(LimeLog::INFO, "Created Lime. Squeezing Lime...");
         LMS::EnableChannel(dev, LMS_CH_RX, 0, true);
         LMS::EnableChannel(dev, LMS_CH_TX, 0, false);
         LMS::SetAntenna(dev, LMS_CH_RX, 0, LMS_PATH_LNAW);
         LMS::SetSampleRate(dev, 2.4e6, 8);
         LMS::SetNormalizedGain(dev, LMS_CH_RX, 0, normalizedGain);
+        LMS::SetLOFrequency(dev, LMS_CH_RX, 0, 1090e6);
 
         stream.reset(new lms_stream_t);
         stream->handle                 = 0;
         stream->isTx                   = false;
         stream->channel                = 0;
-        stream->fifoSize               = 0x7FFFF;
-        stream->throughputVsLatency    = 0.5f;
+        stream->fifoSize               = 1024 * 1024;
+        stream->throughputVsLatency    = 1.0f;
         stream->dataFmt                = lms_stream_t::LMS_FMT_F32;
 
         LMS::SetupStream(dev, stream.get());
         mainLoop(true);
     } catch (LMS::exception &e) {
-        std::cout << "Caught exception: " << e.what() << std::endl;
+        std::cerr << "Caught exception: " << e.what() << std::endl;
         running = false;
     }
 
