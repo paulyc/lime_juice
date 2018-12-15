@@ -53,7 +53,7 @@ void cleanup() {
     }
 }
 
-static double normalizedGain = 0.8;
+static double normalizedGain = 1.0;
 static double powerSamples[0xFFFF] = {0.0};
 static int powerSampleIndex = 0;
 static double powerSampleSum = 0.0;
@@ -103,13 +103,15 @@ void mainLoop(bool autoGain) {
             bytesWritten += count;
         }
 
+#if 0
         if (autoGain && loopCount++ % 1000 == 0) {
-            normalizedGain += 0.01 * (1.0 - maxMag) / normalizedGain;
+            normalizedGain += 0.1 * (1.0 - maxMag) / normalizedGain;
             maxMag = 0.0;
             std::cerr << "setting gain to " << normalizedGain << std::endl;
             //LimeLog::log(LimeLog::DEBUG, msg.c_str());
             LMS::SetNormalizedGain(dev, LMS_CH_RX, 0, normalizedGain);
         }
+#endif
 
         std::atomic_signal_fence(std::memory_order_acquire);
     }
