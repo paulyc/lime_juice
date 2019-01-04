@@ -76,6 +76,7 @@ void mainLoop(bool autoGain) {
     double maxMag = 0.0;
 
     while (running) {
+        normalizedGain = 5.0;
         // (1 sample = I + Q)
         const int samples = LMS::RecvStream(stream.get(), buffer.get(), samples_per_recv, &meta, 5000);
         magTotal = 0.0;
@@ -107,6 +108,10 @@ void mainLoop(bool autoGain) {
             if (Q > maxMag) maxMag = Q;
              I = (I - dcOffset) * normalizedGain;
              Q = (Q - dcOffset) * normalizedGain;
+            if (I > 1.0) I = 1.0;
+            if (I < -1.0) I = -1.0;
+            if (Q > 1.0) Q = 1.0;
+            if (Q < -1.0) Q = -1.0;
              outBuffer[si*2] = (int16_t) (I > 0.0 ? I * SHRT_MAX : I * -SHRT_MIN);
              outBuffer[si*2+1] = (int16_t) (Q > 0.0 ? Q * SHRT_MAX : Q * -SHRT_MIN);
         }
@@ -124,11 +129,13 @@ void mainLoop(bool autoGain) {
             bytesWritten += count;
         }
 
-#if 0
+#if 1
         if (autoGain && loopCount++ % 1000 == 0) {
-            normalizedGain += 0.1 * (0.9 - maxMag) / normalizedGain;
-            maxMag = 0.0;
+            //normalizedGain += 0.1 * (0.9 - maxMag) / normalizedGain;
             std::cerr << "setting gain to " << normalizedGain << std::endl;
+            std::cerr << "maxMag reported " << maxMag << std::endl;
+            maxMag = 0.0;
+
             //LimeLog::log(LimeLog::DEBUG, msg.c_str());
             //LMS::SetNormalizedGain(dev, LMS_CH_RX, 0, normalizedGain);
         }
