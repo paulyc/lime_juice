@@ -1,7 +1,7 @@
 CXX=g++
-LD=g++
+LD=ld
 CXXFLAGS=-std=c++17 -c -g
-LDFLAGS=-lLimeSuite -lc
+LDFLAGS=-macosx_version_min 10.13 -lLimeSuite -lc -lc++
 
 all: lime_juice
 
